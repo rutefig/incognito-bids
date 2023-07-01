@@ -33,6 +33,9 @@ async function main() {
 
   const { verificationKey } = await Auction.compile();
 
+  // below is sample bid amount. to be removed.
+  const currentBid = UInt64.from(34);
+
   console.log('making proof 0');
 
   const biddersTree = new MerkleTree(4);
@@ -59,7 +62,7 @@ async function main() {
   // to change below. need to define bid amount
   const bid2 = AuctionState.submitBid(
     bid1,
-    UInt64,
+    currentBid,
     bidders[bidderIndex1],
     bidderTreeWitness1,
     nullifierWitness1
@@ -67,7 +70,7 @@ async function main() {
   const proof1 = await Auction.submitBid(
     bid2,
     proof0,
-    UInt64,
+    currentBid,
     bidders[bidderIndex1],
     bidderTreeWitness1,
     nullifierWitness1
@@ -86,7 +89,7 @@ async function main() {
   // to change below. need to define bid amount
   const vote2 = AuctionState.submitBid(
     bid2,
-    UInt64,
+    currentBid,
     bidders[bidderIndex2],
     voterTreeWitness2,
     nullifierWitness2
@@ -94,7 +97,7 @@ async function main() {
   const proof2 = await Auction.submitBid(
     vote2,
     proof1,
-    UInt64,
+    currentBid,
     bidders[bidderIndex2],
     voterTreeWitness2,
     nullifierWitness2
