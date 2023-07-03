@@ -36,12 +36,23 @@ describe('Auction', () => {
     );
   });
 
-  it.only('should submit an invalid bid', async () => {
+  it('should not submit a bid with an amount less than the last valid bid', async () => {
     const initialProof = await Auction.init();
     const bidder = PrivateKey.random();
     const bid = new Bid({
       amount: Field(0),
       bidder: bidder.toPublicKey(),
+    });
+
+    await expect(Auction.submitBid(bid, initialProof)).rejects.toThrow();
+  });
+
+  it('should not submit a bid with the same bidder as the last valid bid', async () => {
+    const initialProof = await Auction.init();
+
+    const bid = new Bid({
+      amount: Field(10),
+      bidder: PublicKey.empty(),
     });
 
     await expect(Auction.submitBid(bid, initialProof)).rejects.toThrow();

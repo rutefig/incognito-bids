@@ -47,6 +47,9 @@ export const Auction = Experimental.ZkProgram({
         const lastValidBid = previousProof.publicOutput.lastValidBid;
         lastValidBid.amount.assertLessThan(bid.amount);
 
+        // Check that the bidder is not the same as the last valid bidder.
+        lastValidBid.bidder.equals(bid.bidder).assertFalse();
+
         return new AuctionState({
           lastValidBid: bid,
           biddsTreeRoot: Field(0), // TODO
