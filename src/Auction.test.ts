@@ -1,4 +1,4 @@
-import { AccountUpdate, Field, Mina, PrivateKey, PublicKey } from 'snarkyjs';
+import { Field, PrivateKey, PublicKey } from 'snarkyjs';
 import { Auction, Bid } from './Auction';
 
 describe('Auction', () => {
