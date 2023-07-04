@@ -1,12 +1,4 @@
-import {
-  Experimental,
-  Field,
-  MerkleMap,
-  PublicKey,
-  SelfProof,
-  SmartContract,
-  Struct,
-} from 'snarkyjs';
+import { Experimental, Field, PublicKey, SelfProof, Struct } from 'snarkyjs';
 
 export class Bid extends Struct({
   amount: Field,
