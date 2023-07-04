@@ -110,15 +110,16 @@ async function main() {
   const ok = await Auction.verify(proof2);
   console.log('ok', ok);
 
-  console.log('Shutting down');
+  //console.log('Shutting down');
 
-  await shutdown();
+  //await shutdown();
 }
 
 // ===============================================================
 
 class AuctionState extends Struct({
-  bidAmount: Field,
+  bidAmount: UInt64,
+  // currentTime: UInt64,  TODO: GET CURRENT TIME STAMP
   biddersTreeRoot: Field,
   nullifierMapRoot: Field,
 }) {
@@ -126,7 +127,9 @@ class AuctionState extends Struct({
     const emptyMap = new MerkleMap();
 
     return new AuctionState({
-      bidAmount: Field(0),
+      bidAmount: UInt64.from(0),
+      // currentTime: this.etwork.timestamp.get(),
+      // this.network.timestamp.assertBetween(now, now.add(60 * 60 * 1000));
       biddersTreeRoot: votersTreeRoot,
       nullifierMapRoot: emptyMap.getRoot(),
     });
@@ -146,6 +149,9 @@ class AuctionState extends Struct({
     );
     bidderRoot.assertEquals(state.biddersTreeRoot);
 
+    // TO DO: NEED CHECK IF NEW BID AMOUNT IS GTE THAN OLD BID AMOUNT
+    bidAmount.greaterThanOrEqual(state.bidAmount);
+
     let nullifier = Poseidon.hash(privateKey.toFields());
 
     const [nullifierRootBefore, key] = nullifierWitness.computeRootAndKey(
@@ -160,14 +166,14 @@ class AuctionState extends Struct({
 
     return new AuctionState({
       // change below code
-      bidAmount: state.bidAmount.add(Circuit.if(bidAmount, Field(1), Field(0))),
+      bidAmount: state.bidAmount.add(bidAmount),
       biddersTreeRoot: state.biddersTreeRoot,
       nullifierMapRoot: nullifierRootAfter,
     });
   }
 
   static assertInitialState(state: AuctionState) {
-    state.bidAmount.assertEquals(Field(0));
+    state.bidAmount.assertEquals(UInt64.from(0));
 
     const emptyMap = new MerkleMap();
     state.nullifierMapRoot.assertEquals(emptyMap.getRoot());
@@ -182,10 +188,12 @@ class AuctionState extends Struct({
 
 // ===============================================================
 
+// below is verified in the browser
 const Auction = Experimental.ZkProgram({
   publicInput: AuctionState,
 
   methods: {
+    // below is like init?
     create: {
       privateInputs: [],
 
@@ -196,16 +204,16 @@ const Auction = Experimental.ZkProgram({
 
     submitBid: {
       privateInputs: [
-        SelfProof,
+        SelfProof, //previous proof
         UInt64,
-        PrivateKey,
+        PrivateKey, //user's key
         MerkleWitness4,
         MerkleMapWitness,
       ],
 
       method(
         newState: AuctionState,
-        earlierProof: SelfProof<AuctionState>,
+        earlierProof: SelfProof<AuctionState, null>, // to change this!
         bidAmount: UInt64,
         bidder: PrivateKey,
         bidderWitness: MerkleWitness4,
