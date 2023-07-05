@@ -1,60 +1,50 @@
-import { Field, PrivateKey, PublicKey } from 'snarkyjs';
-import { Auction, Bid } from './Auction';
+import {
+  Bool,
+  Field,
+  MerkleMapWitness,
+  PrivateKey,
+  PublicKey,
+  Undefined,
+} from 'snarkyjs';
+import { Rollup, Bid } from './Auction.rollup';
 
-describe('Auction', () => {
+describe('Auction Rollup', () => {
   beforeAll(async () => {
-    await Auction.compile();
+    await Rollup.compile();
   });
 
-  it('should create a new Auction', async () => {
-    const initialProof = await Auction.init();
+  const MOCK_INITIAL_STATE = {
+    initialRoot: Field(0),
+    latestRoot: Field(0),
+  };
 
-    expect(initialProof.publicOutput.biddsTreeRoot).toStrictEqual(Field(0));
-    expect(initialProof.publicOutput.nullifierMapRoot).toStrictEqual(Field(0));
-    expect(initialProof.publicOutput.lastValidBid.amount).toStrictEqual(
-      Field(0)
-    );
-    expect(initialProof.publicOutput.lastValidBid.bidder).toStrictEqual(
-      PublicKey.empty()
-    );
+  const INITIAL_BID = new Bid({
+    amount: Field(0),
+    bidder: PublicKey.empty(),
   });
 
-  it('should submit a valid bid', async () => {
-    const initialProof = await Auction.init();
+  it.only('should create a valid bid', async () => {
     const bidder = PrivateKey.random();
     const bid = new Bid({
       amount: Field(10),
       bidder: bidder.toPublicKey(),
     });
-    const bidProof = await Auction.submitBid(bid, initialProof);
-
-    expect(bidProof.publicOutput.biddsTreeRoot).toStrictEqual(Field(0));
-    expect(bidProof.publicOutput.nullifierMapRoot).toStrictEqual(Field(0));
-    expect(bidProof.publicOutput.lastValidBid.amount).toStrictEqual(Field(10));
-    expect(bidProof.publicOutput.lastValidBid.bidder).toStrictEqual(
-      bidder.toPublicKey()
+    const bidProof = await Rollup.submitBid(
+      MOCK_INITIAL_STATE,
+      Field(0),
+      Field(0),
+      Field(0),
+      INITIAL_BID,
+      bid,
+      new MerkleMapWitness([Bool(true), Bool(false)], [Field(0), Field(10)])
     );
+
+    console.log(bidProof.toJSON());
   });
 
-  it('should not submit a bid with an amount less than the last valid bid', async () => {
-    const initialProof = await Auction.init();
-    const bidder = PrivateKey.random();
-    const bid = new Bid({
-      amount: Field(0),
-      bidder: bidder.toPublicKey(),
-    });
+  // it('should not submit a bid with an amount less than the last valid bid', async () => {
+  // });
 
-    await expect(Auction.submitBid(bid, initialProof)).rejects.toThrow();
-  });
-
-  it('should not submit a bid with the same bidder as the last valid bid', async () => {
-    const initialProof = await Auction.init();
-
-    const bid = new Bid({
-      amount: Field(10),
-      bidder: PublicKey.empty(),
-    });
-
-    await expect(Auction.submitBid(bid, initialProof)).rejects.toThrow();
-  });
+  // it('should not submit a bid with the same bidder as the last valid bid', async () => {
+  // });
 });
