@@ -20,16 +20,23 @@ export class RollupState extends Struct({
     initialRoot: Field,
     latestRoot: Field,
     key: Field,
-    currentValue: Field,
-    incrementAmount: Field,
+    currentBid: Bid,
+    nextBid: Bid,
     merkleMapWitness: MerkleMapWitness
   ) {
-    const [witnessRootBefore, witnessKey] =
-      merkleMapWitness.computeRootAndKey(currentValue);
+    // validations
+    currentBid.amount.greaterThan(Field(0));
+    nextBid.amount.greaterThan(Field(0));
+    currentBid.amount.assertLessThan(nextBid.amount);
+    currentBid.bidder.equals(nextBid.bidder).assertFalse();
+
+    const [witnessRootBefore, witnessKey] = merkleMapWitness.computeRootAndKey(
+      currentBid.amount
+    );
     initialRoot.assertEquals(witnessRootBefore);
     witnessKey.assertEquals(key);
     const [witnessRootAfter, _] = merkleMapWitness.computeRootAndKey(
-      currentValue.add(incrementAmount)
+      nextBid.amount
     );
     latestRoot.assertEquals(witnessRootAfter);
 
@@ -57,23 +64,23 @@ export const Rollup = Experimental.ZkProgram({
 
   methods: {
     submitBid: {
-      privateInputs: [Field, Field, Field, Field, Field, MerkleMapWitness],
+      privateInputs: [Field, Field, Field, Bid, Bid, MerkleMapWitness],
 
       method(
         state: RollupState,
         initialRoot: Field,
         latestRoot: Field,
         key: Field,
-        currentValue: Field,
-        incrementAmount: Field,
+        currentBid: Bid,
+        nextBid: Bid,
         merkleMapWitness: MerkleMapWitness
       ) {
         const computedState = RollupState.createBid(
           initialRoot,
           latestRoot,
           key,
-          currentValue,
-          incrementAmount,
+          currentBid,
+          nextBid,
           merkleMapWitness
         );
         RollupState.assertEquals(computedState, state);
